@@ -17,7 +17,6 @@ public class BaseEnemy : MonoBehaviour
     protected Animator _animator;
     protected Damagable _damagable;
 
-    // Направление движения
     public enum WalkableDirection
     {
         Left,
@@ -27,16 +26,13 @@ public class BaseEnemy : MonoBehaviour
     protected WalkableDirection _walkDirection = WalkableDirection.Right;
     protected Vector2 _walkDirectionVector = Vector2.right;
 
-    // Свойство для чтения/записи направления
     public WalkableDirection WalkDirection
     {
         get => _walkDirection;
         set
         {
-            // Если враг сейчас не может двигаться (например, получил урон), не меняем направление
             if (_damagable.LockVelocity) return;
-            
-            // Если новое направление отличается, разворачиваем спрайт
+
             if (_walkDirection != value)
             {
                 transform.localScale = new Vector2(
@@ -44,14 +40,12 @@ public class BaseEnemy : MonoBehaviour
                     transform.localScale.y
                 );
 
-                // Обновляем вектор движения
                 _walkDirectionVector = (value == WalkableDirection.Right) ? Vector2.right : Vector2.left;
             }
             _walkDirection = value;
         }
     }
 
-    // Показывает, видит ли враг цель (игрока или что-то ещё)
     protected bool _hasTarget = false;
     public bool HasTarget
     {
@@ -59,25 +53,21 @@ public class BaseEnemy : MonoBehaviour
         protected set
         {
             _hasTarget = value;
-            // Записываем в аниматор (если у тебя есть соответствующий параметр)
             _animator.SetBool(AnimationStrings.hasTarget, value);
         }
     }
 
-    // Может ли враг двигаться (зависит от аниматора)
     public bool CanMove
     {
         get => _animator.GetBool(AnimationStrings.canMove);
     }
 
-    // Кулдаун атаки (если нужно)
     public float AttackCooldown
     {
         get => _animator.GetFloat(AnimationStrings.AttackCooldown);
         protected set => _animator.SetFloat(AnimationStrings.AttackCooldown, Mathf.Max(value, 0));
     }
 
-    // Инициализация
     protected virtual void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
@@ -86,26 +76,21 @@ public class BaseEnemy : MonoBehaviour
         _damagable = GetComponent<Damagable>();
     }
 
-    // Логика, вызываемая каждый кадр
     protected virtual void Update()
     {
-        // Проверяем, видим ли мы цель
         HasTarget = attackZone.detectedColliders.Count > 0;
 
-        // Если враг "мертв" (isAlive = false), отключаем движение
         if (!_animator.GetBool(AnimationStrings.isAlive))
         {
             _animator.SetBool(AnimationStrings.canMove, false);
         }
 
-        // Считаем кулдаун атаки
         if (AttackCooldown > 0)
         {
             AttackCooldown -= Time.deltaTime;
         }
     }
 
-    // Логика поворота
     protected virtual void FlipDirection()
     {
         if (WalkDirection == WalkableDirection.Right)
@@ -120,25 +105,19 @@ public class BaseEnemy : MonoBehaviour
         Debug.Log("Flipped. Now going " + WalkDirection);
     }
 
-    // Вызвать, если враг получил урон
     public virtual void OnHit(int damage, Vector2 knockback)
     {
-        // Применяем силу удара
         Debug.Log($"{name} got hit! Knockback: {knockback}");
         _rb.velocity = new Vector2(knockback.x, _rb.velocity.y + knockback.y);
     }
     
-
-    // Физическая логика (движение и т.д.), вызывается раз в кадр физики
     protected virtual void FixedUpdate()
     {
-        // Если упираемся в стену + на земле, или обнаружили обрыв – разворачиваемся
         if (_touchingDirections.IsOnWall && _touchingDirections.IsGround)
         {
             FlipDirection();
         }
 
-        // Если враг не заблокирован (не в анимации урона, например) и на земле – двигаем его
         if (!_damagable.LockVelocity && _touchingDirections.IsGround)
         {
             if (CanMove)
