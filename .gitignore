@@ -1,0 +1,24 @@
+*.csproj
+*.sln
+*.user
+
+# Unity
+Library/
+Temp/
+Obj/
+Builds/
+UserSettings/
+
+# VS
+.vs/
+.idea/
+*.csproj
+*.sln
+
+
+
+
+Temp/
+^X
+
+
